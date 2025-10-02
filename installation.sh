@@ -1,5 +1,12 @@
 # #!/bin/bash
 
+echo "modification de la memoire..."
+
+dd if=/dev/zero of=/swapfile1 bs=1024 count=1048576
+chmod 600 /swapfile1 
+mkswap /swapfile1
+swapon /swapfile1
+
 echo "update du vps..."
 sudo apt update -y
 sudo apt install -y vim
@@ -37,8 +44,8 @@ sudo mysql -e "FLUSH PRIVILEGES;"
 
 echo "phpmyadmin phpmyadmin/reconfigure-webserver multiselect apache2" | sudo debconf-set-selections
 echo "phpmyadmin phpmyadmin/dbconfig-install boolean true" | sudo debconf-set-selections
-echo "phpmyadmin phpmyadmin/mysql/admin-pass password " | sudo debconf-set-selections
-echo "phpmyadmin phpmyadmin/app-password-confirm password " | sudo debconf-set-selections
+echo "phpmyadmin phpmyadmin/mysql/admin-pass password $1" | sudo debconf-set-selections
+echo "phpmyadmin phpmyadmin/app-password-confirm password $1" | sudo debconf-set-selections
 
 sudo apt install -y phpmyadmin
 
@@ -86,13 +93,6 @@ wget https://assets.prestashop3.com/dst/edition/corporate/9.0.0-1.0/prestashop_e
 mv 'prestashop_edition_classic_version_9.0.0-1.0.zip?source=docker' prestashop.zip
 echo "recup ok"
 
-echo "modification de la memoire..."
-
-dd if=/dev/zero of=/swapfile1 bs=1024 count=1048576
-chmod 600 /swapfile1 
-mkswap /swapfile1
-swapon /swapfile1
-
 sudo apt update
 sudo apt install unzip
 
@@ -111,11 +111,11 @@ sudo apt restart apache2
 
 mysql -u maxence -p$1 -e "CREATE DATABASE SAEShop;"
 
-php index_cli.php --domain=www.prestashopexo.com --db_server=127.0.0.1 --db_name=SAEShop --db_user=maxence  --db_password=$1  --prefix=myshop_ --email=maxence.sanchez05@gmail.com --password=$1
-
 sudo chown -R www-data:www-data /var/www/html/perso
 sudo find /var/www/html/perso -type d -exec chmod 755 {} \;
 sudo find /var/www/html/perso -type f -exec chmod 644 {} \;
+
+php index_cli.php --domain=www.prestashopexo.com --db_server=127.0.0.1 --db_name=SAEShop --db_user=maxence  --db_password=$1  --prefix=myshop_ --email=maxence.sanchez05@gmail.com --password=$1
 
 sudo apt restart apache2
 
