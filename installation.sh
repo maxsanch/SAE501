@@ -114,7 +114,15 @@ sudo chown -R www-data:www-data /var/www/html/perso
 sudo find /var/www/html/perso -type d -exec chmod 755 {} \;
 sudo find /var/www/html/perso -type f -exec chmod 644 {} \;
 
+
+echo "recherche index cli..."
+
+cd /var/www/html/perso/install
 php index_cli.php --domain=www.prestashopexo.com --db_server=127.0.0.1 --db_name=SAEShop --db_user=maxence  --db_password=$1  --prefix=myshop_ --email=maxence.sanchez05@gmail.com --password=$1
+
+cd /var/www/html/perso
+
+sudo rm -r install
 
 sudo apt restart apache2
 
