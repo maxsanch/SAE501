@@ -77,7 +77,6 @@ sudo a2ensite perso.conf
 
 sudo systemctl reload apache2
 
-sudo apt install ssl
 sudo a2enmod ssl
 
 echo "activation du site..."
