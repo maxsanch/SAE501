@@ -61,7 +61,10 @@ mkdir perso
 
 cd /home
 
-mv /SAE501/perso.conf /etc/apache2/sites-available
+cd /etc/apache2/sites-available
+
+wget "https://raw.githubusercontent.com/maxsanch/SAE501/refs/heads/main/perso.conf"
+wget "https://raw.githubusercontent.com/maxsanch/SAE501/refs/heads/main/perso-ssl.conf"
 
 sudo a2ensite perso.conf
 
@@ -69,8 +72,6 @@ sudo systemctl reload apache2
 
 sudo apt install ssl
 sudo a2enmod ssl
-
-mv /SAE501/perso-ssl.conf /etc/apache2/sites-available
 
 echo "activation du site..."
 sudo a2ensite perso-ssl.conf
