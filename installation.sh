@@ -45,6 +45,7 @@ sudo mysql -e "FLUSH PRIVILEGES;"
 echo "phpmyadmin phpmyadmin/reconfigure-webserver multiselect apache2" | sudo debconf-set-selections
 echo "phpmyadmin phpmyadmin/dbconfig-install boolean true" | sudo debconf-set-selections
 echo "phpmyadmin phpmyadmin/mysql/admin-pass password $1" | sudo debconf-set-selections
+echo "phpmyadmin phpmyadmin/mysql/app-pass password $1" | sudo debconf-set-selections
 echo "phpmyadmin phpmyadmin/app-password-confirm password $1" | sudo debconf-set-selections
 
 sudo apt install -y phpmyadmin
