@@ -76,8 +76,6 @@ wget "https://raw.githubusercontent.com/maxsanch/SAE501/refs/heads/main/perso-ss
 
 sudo a2ensite perso.conf
 
-sudo systemctl reload apache2
-
 sudo a2enmod ssl
 
 echo "activation du site..."
@@ -107,8 +105,6 @@ unzip -o prestashop.zip
 sudo apt update
 sudo apt install -y unzip php-intl
 
-sudo apt restart apache2
-
 mysql -u maxence -p$1 -e "CREATE DATABASE SAEShop;"
 
 sudo chown -R www-data:www-data /var/www/html/perso
@@ -125,7 +121,7 @@ cd /var/www/html/perso
 
 sudo rm -r install
 
-sudo apt restart apache2
+sudo systemctl restart apache2
 
 echo "-- normalement, c'est bon !--"
 

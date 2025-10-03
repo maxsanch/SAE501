@@ -106,7 +106,7 @@ unzip -o prestashop.zip
 sudo apt update
 sudo apt install -y unzip php-intl
 
-sudo apt restart apache2
+sudo systemctl restart apache2
 
 mysql -u maxence -p$1 -e "CREATE DATABASE SAEShop;"
 
@@ -116,9 +116,9 @@ sudo chown -R www-data:www-data /var/www/html/perso
 sudo find /var/www/html/perso -type d -exec chmod 755 {} \;
 sudo find /var/www/html/perso -type f -exec chmod 644 {} \;
 
-sudo apt restart apache2
+sudo systemctl restart apache2
 
-echo "-- normalement, c'est bon !--"
+echo "--normalement, c'est bon !--"
 
 # sudo useradd -m installationftp
 
