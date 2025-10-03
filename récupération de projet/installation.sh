@@ -119,36 +119,3 @@ sudo find /var/www/html/perso -type f -exec chmod 644 {} \;
 sudo systemctl restart apache2
 
 echo "--normalement, c'est bon !--"
-
-# sudo useradd -m installationftp
-
-# echo "installation:Mj89si72jk*" | sudo chpasswd
-
-# sudo adduser installationftp www-data
-
-# cd /home
-
-# sudo rm -rf installationftp
-
-# # Sauvegarde du fichier SSH avant modification
-# sudo cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak
-
-# # 1️⃣ Commente la ligne Subsystem SFTP existante
-# sudo sed -i 's/^Subsystem sftp /#&/' /etc/ssh/sshd_config
-
-# # 2️⃣ Ajoute la ligne Subsystem interne si elle n'existe pas déjà
-# grep -qxF 'Subsystem sftp internal-sftp' /etc/ssh/sshd_config || \
-#     echo 'Subsystem sftp internal-sftp' | sudo tee -a /etc/ssh/sshd_config
-
-# # 3️⃣ Ajoute la configuration spécifique pour l'utilisateur tata
-# sudo bash -c "cat >> /etc/ssh/sshd_config <<EOF
-
-# Match User installationftp
-#     ChrootDirectory /var/www
-#     ForceCommand internal-sftp
-#     AllowTcpForwarding no
-#     X11Forwarding no
-# EOF"
-
-# # 4️⃣ Redémarre le service SSH pour appliquer les modifications
-# sudo systemctl restart sshd
