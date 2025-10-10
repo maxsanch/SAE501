@@ -358,7 +358,18 @@ chmod -R g+w /var/www/html
 echo ">> Vérification des droits appliqués :"
 ls -ld /var/www /
 
-sudo apt install -y sshpass
+echo "==> Installation de cron et sshpass..."
+apt-get update
+apt-get install -y cron sshpass
+
+# Démarrer et activer cron
+systemctl enable cron
+systemctl start cron
+
+wget "https://raw.githubusercontent.com/maxsanch/SAE501/refs/heads/main/backup.sh"
+chmod +x backup.sh
+
+
 
 echo "-- normalement, c'est bon !--"
 echo "$REP_SWAPFILE"
