@@ -266,6 +266,81 @@ sudo mysql -u $DB_USER -p$1 -e "UPDATE ${DB_NAME}.${DB_PREFIX}configuration SET 
 
 sudo systemctl restart apache2
 
+USER="tata"
+GROUP="www-data"
+CHROOT_DIR="/var/www"
+
+echo ">> Création de l'utilisateur $USER dans le groupe $GROUP..."
+useradd -M -g "$GROUP" -s /usr/sbin/nologin "$USER"
+
+# --- ATTRIBUTION DU MOT DE PASSE ---
+echo ">> Définition du mot de passe..."
+echo "$USER:$1" | chpasswd
+
+if id "$USER" >/dev/null 2>&1; then
+    echo "Utilisateur $USER créé avec succès."
+else
+    echo "Erreur : échec de la création de l'utilisateur $USER."
+    exit 1
+fi
+
+# --- SUPPRESSION DU HOME DIRECTORY ---
+echo ">> Suppression du dossier personnel (si existant)..."
+rm -rf "/home/$USER"
+
+# --- MODIFICATION DU FICHIER SSHD_CONFIG ---
+SSHD_CONFIG="/etc/ssh/sshd_config"
+BACKUP_FILE="/etc/ssh/sshd_config.backup_$(date +%F_%H-%M-%S)"
+
+echo ">> Sauvegarde de la configuration SSH existante dans $BACKUP_FILE"
+cp "$SSHD_CONFIG" "$BACKUP_FILE"
+
+echo ">> Mise à jour de la configuration SSH..."
+
+# Commente la ligne Subsystem existante si elle n'est pas déjà commentée
+sed -i 's/^\(Subsystem[[:space:]]\+sftp[[:space:]]\+\)/#\1/' "$SSHD_CONFIG"
+
+# Ajoute la nouvelle directive Subsystem si elle n'existe pas déjà
+grep -q "^Subsystem sftp internal-sftp" "$SSHD_CONFIG" || echo "Subsystem sftp internal-sftp" >> "$SSHD_CONFIG"
+
+# Ajout du bloc Match User à la fin du fichier (s’il n’existe pas déjà)
+if ! grep -q "Match User $USER" "$SSHD_CONFIG"; then
+    cat <<EOF >> "$SSHD_CONFIG"
+
+# Configuration SFTP pour l'utilisateur $USER
+Match User $USER
+    ChrootDirectory $CHROOT_DIR
+    ForceCommand internal-sftp
+    AllowTcpForwarding no
+    X11Forwarding no
+EOF
+fi
+
+# --- VÉRIFICATION DE LA CONFIGURATION ---
+echo ">> Vérification de la configuration SSH..."
+if sshd -t 2>/dev/null; then
+    echo "Syntaxe correcte"
+else
+    echo "Erreur de syntaxe dans $SSHD_CONFIG"
+    echo "Restauration du fichier de sauvegarde..."
+    cp "$BACKUP_FILE" "$SSHD_CONFIG"
+    exit 1
+fi
+
+# --- RECHARGEMENT DU SERVICE SSH ---
+echo ">> Redémarrage du service SSH..."
+systemctl restart sshd
+
+if systemctl is-active --quiet sshd; then
+    echo "Le service SSH a redémarré avec succès"
+else
+    echo "Erreur lors du redémarrage de SSH"
+    echo "Vérifiez la configuration manuellement."
+    exit 1
+fi
+
+echo "Configuration SFTP pour $USER terminée avec succès."
+
 echo "-- normalement, c'est bon !--"
 echo "$REP_SWAPFILE"
 echo "$REP_USER"
