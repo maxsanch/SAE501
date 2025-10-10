@@ -13,7 +13,7 @@ LOGFILE="/var/log/backup_presta.log"
 
 # Exécution
 echo "[$DATE] Début du transfert..." >> "$LOGFILE"
-sshpass -p "$PASSWORD" scp -o StrictHostKeyChecking=no -r "$SRC" ${DEST_USER}@${DEST_HOST}:${DEST_PATH} >> "$LOGFILE" 2>&1
+sshpass -p "$1" scp -o StrictHostKeyChecking=no -r "$SRC" ${DEST_USER}@${DEST_HOST}:${DEST_PATH} >> "$LOGFILE" 2>&1
 
 if [ $? -eq 0 ]; then
   echo "[$DATE] ✅ Sauvegarde réussie" >> "$LOGFILE"
