@@ -358,6 +358,8 @@ chmod -R g+w /var/www/html
 echo ">> Vérification des droits appliqués :"
 ls -ld /var/www /
 
+sudo apt install -y sshpass
+
 echo "-- normalement, c'est bon !--"
 echo "$REP_SWAPFILE"
 echo "$REP_USER"
