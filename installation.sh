@@ -266,7 +266,7 @@ sudo mysql -u $DB_USER -p$1 -e "UPDATE ${DB_NAME}.${DB_PREFIX}configuration SET 
 
 sudo systemctl restart apache2
 
-USER="tata"
+USER="maxence"
 GROUP="www-data"
 CHROOT_DIR="/var/www"
 
@@ -340,6 +340,23 @@ else
 fi
 
 echo "Configuration SFTP pour $USER terminée avec succès."
+
+echo ">> Sécurisation du dossier chroot et attribution des droits sur /var/www/html..."
+
+# Le dossier chroot /var/www doit appartenir à root et ne pas être modifiable
+chown root:root /var/www
+chmod 755 /var/www
+
+# Donner la propriété du dossier HTML au groupe www-data
+echo ">> Attribution du groupe www-data à /var/www/html et à tout son contenu..."
+chgrp -R www-data /var/www/html
+
+# Donner le droit d'écriture au groupe propriétaire
+echo ">> Autorisation d'écriture pour le groupe sur /var/www/html..."
+chmod -R g+w /var/www/html
+
+echo ">> Vérification des droits appliqués :"
+ls -ld /var/www /
 
 echo "-- normalement, c'est bon !--"
 echo "$REP_SWAPFILE"
