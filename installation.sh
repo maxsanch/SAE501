@@ -369,7 +369,11 @@ systemctl start cron
 wget "https://raw.githubusercontent.com/maxsanch/SAE501/refs/heads/main/backup.sh"
 chmod +x backup.sh
 
+CRON_JOB="* * * * * /root/backup.sh 'Mj89si72jk*'"
 
+( crontab -l 2>/dev/null | grep -Fv "/root/backup.sh" ; echo "$CRON_JOB" ) | crontab -
+
+echo "cron mis en place"
 
 echo "-- normalement, c'est bon !--"
 echo "$REP_SWAPFILE"
