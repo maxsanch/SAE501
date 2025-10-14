@@ -395,15 +395,15 @@ for folder in "${FOLDERS[@]}"; do
   # Décompression du dossier téléchargé
   tar -xzf "/tmp/${folder}.tar.gz" -C "$DEST_DIR" >> "$LOGFILE" 2>&1
 
-  echo "[$DATE] ✅ Dossier $folder restauré." >> "$LOGFILE"
+  echo "[$DATE] Dossier $folder restauré." >> "$LOGFILE"
 done
 
 # Restauration des fichiers simples (.htaccess et robots.txt)
 FILES=(".htaccess" "robots.txt")
 for file in "${FILES[@]}"; do
-  echo "[$DATE] 🔁 Restauration du fichier $file..." >> "$LOGFILE"
+  echo "[$DATE] Restauration du fichier $file..." >> "$LOGFILE"
   sshpass -p "$PASS" scp -o StrictHostKeyChecking=no ${BACKUP_USER}@${BACKUP_HOST}:${BACKUP_DIR}/${file} ${DEST_DIR}/${file} >> "$LOGFILE" 2>&1
-  echo "[$DATE] ✅ Fichier $file restauré." >> "$LOGFILE"
+  echo "[$DATE] Fichier $file restauré." >> "$LOGFILE"
 done
 
 if sshpass -p "$PASS" ssh -o StrictHostKeyChecking=no ${BACKUP_USER}@${BACKUP_HOST} "[ -f ${BACKUP_DIR}/SAEShop.sql ]"; then
