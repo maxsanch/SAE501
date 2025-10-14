@@ -377,7 +377,7 @@ echo "[$DATE] Début de la restauration..." >> "$LOGFILE"
 
 # Vérification du mot de passe
 if [ -z "$PASS" ]; then
-  echo "[$DATE] ❌ Aucun mot de passe fourni !" >> "$LOGFILE"
+  echo "[$DATE] Aucun mot de passe fourni !" >> "$LOGFILE"
   exit 1
 fi
 
