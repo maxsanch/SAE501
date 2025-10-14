@@ -358,6 +358,63 @@ chmod -R g+w /var/www/html
 echo ">> Vérification des droits appliqués :"
 ls -ld /var/www /
 
+###########################################
+# RESTAURATION DU BACKUP (site + base)
+###########################################
+
+echo "==> Début de la restauration du backup distant..."
+
+# Variables de connexion
+BACKUP_USER="backupsite"
+BACKUP_HOST="87.106.123.59"
+BACKUP_DIR="/home/backupsite/backup"
+DEST_DIR="/var/www/html/perso"
+LOGFILE="/var/log/restore_presta.log"
+PASS="$1"  # mot de passe passé en paramètre
+
+DATE=$(date '+%Y-%m-%d %H:%M:%S')
+echo "[$DATE] Début de la restauration..." >> "$LOGFILE"
+
+# Vérification du mot de passe
+if [ -z "$PASS" ]; then
+  echo "[$DATE] ❌ Aucun mot de passe fourni !" >> "$LOGFILE"
+  exit 1
+fi
+
+# Liste des dossiers à restaurer
+FOLDERS=("themes" "config" "modules" "img" "upload" "download" "mails")
+
+for folder in "${FOLDERS[@]}"; do
+  echo "[$DATE] 🔁 Restauration du dossier $folder..." >> "$LOGFILE"
+  # Téléchargement du dossier depuis le serveur distant
+  sshpass -p "$PASS" scp -o StrictHostKeyChecking=no -r ${BACKUP_USER}@${BACKUP_HOST}:${BACKUP_DIR}/${folder}.tar.gz /tmp/ >> "$LOGFILE" 2>&1
+
+  # Suppression de l'ancien dossier local
+  rm -rf "${DEST_DIR:?}/${folder}"
+
+  # Décompression du dossier téléchargé
+  tar -xzf "/tmp/${folder}.tar.gz" -C "$DEST_DIR" >> "$LOGFILE" 2>&1
+
+  echo "[$DATE] ✅ Dossier $folder restauré." >> "$LOGFILE"
+done
+
+# Restauration des fichiers simples (.htaccess et robots.txt)
+FILES=(".htaccess" "robots.txt")
+for file in "${FILES[@]}"; do
+  echo "[$DATE] 🔁 Restauration du fichier $file..." >> "$LOGFILE"
+  sshpass -p "$PASS" scp -o StrictHostKeyChecking=no ${BACKUP_USER}@${BACKUP_HOST}:${BACKUP_DIR}/${file} ${DEST_DIR}/${file} >> "$LOGFILE" 2>&1
+  echo "[$DATE] ✅ Fichier $file restauré." >> "$LOGFILE"
+done
+
+if sshpass -p "$PASS" ssh -o StrictHostKeyChecking=no ${BACKUP_USER}@${BACKUP_HOST} "[ -f ${BACKUP_DIR}/SAEShop.sql ]"; then
+  echo "[$DATE] Restauration de la base de données..." >> "$LOGFILE"
+  sshpass -p "$PASS" scp -o StrictHostKeyChecking=no ${BACKUP_USER}@${BACKUP_HOST}:${BACKUP_DIR}/SAEShop.sql /tmp/
+  mysql -u maxence -p"$PASS" SAEShop < /tmp/SAEShop.sql >> "$LOGFILE" 2>&1
+  echo "[$DATE] Base de données restaurée." >> "$LOGFILE"
+fi
+
+echo "[$DATE] Restauration terminée avec succès !" >> "$LOGFILE"
+
 echo "==> Installation de cron et sshpass..."
 apt-get update
 apt-get install -y cron sshpass
