@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# verifier si le server accepte la restor avant, verifier si les inforamtions de la BDD ont changer et transferer le dossier perso
+
 echo "modification de la memoire..."
 
 dd if=/dev/zero of=/swapfile1 bs=1024 count=1048576
@@ -247,7 +249,7 @@ cd /var/www/html/perso/install
 
 REP_CLI=""
 
-if php index_cli.php --domain=www.prestashopexo.com --db_server=127.0.0.1 --db_name=SAEShop --db_user=maxence  --db_password=$1  --prefix=myshop_ --email=maxence.sanchez05@gmail.com --password=$1; then
+if php index_cli.php --domain=ip87-106-123-75.pbiass.com --db_server=127.0.0.1 --db_name=SAEShop --db_user=maxence  --db_password=$1  --prefix=myshop_ --email=maxence.sanchez05@gmail.com --password=$1; then
     REP_CLI="installation CLi effectuée"
 else
     REP_CLI="l'installation CLI a échouée."
@@ -266,27 +268,27 @@ sudo mysql -u $DB_USER -p$1 -e "UPDATE ${DB_NAME}.${DB_PREFIX}configuration SET 
 
 sudo systemctl restart apache2
 
-USER="maxence"
+USERFTP="maxenceftp"
 GROUP="www-data"
 CHROOT_DIR="/var/www"
 
-echo ">> Création de l'utilisateur $USER dans le groupe $GROUP..."
-useradd -M -g "$GROUP" -s /usr/sbin/nologin "$USER"
+echo ">> Création de l'utilisateur $USERFTP dans le groupe $GROUP..."
+useradd -M -g "$GROUP" -s /usr/sbin/nologin "$USERFTP"
 
 # --- ATTRIBUTION DU MOT DE PASSE ---
 echo ">> Définition du mot de passe..."
-echo "$USER:$1" | chpasswd
+echo "$USERFTP:$1" | chpasswd
 
-if id "$USER" >/dev/null 2>&1; then
-    echo "Utilisateur $USER créé avec succès."
+if id "$USERFTP" >/dev/null 2>&1; then
+    echo "Utilisateur $USERFTP créé avec succès."
 else
-    echo "Erreur : échec de la création de l'utilisateur $USER."
+    echo "Erreur : échec de la création de l'utilisateur $USERFTP."
     exit 1
 fi
 
 # --- SUPPRESSION DU HOME DIRECTORY ---
 echo ">> Suppression du dossier personnel (si existant)..."
-rm -rf "/home/$USER"
+rm -rf "/home/$USERFTP"
 
 # --- MODIFICATION DU FICHIER SSHD_CONFIG ---
 SSHD_CONFIG="/etc/ssh/sshd_config"
@@ -304,11 +306,10 @@ sed -i 's/^\(Subsystem[[:space:]]\+sftp[[:space:]]\+\)/#\1/' "$SSHD_CONFIG"
 grep -q "^Subsystem sftp internal-sftp" "$SSHD_CONFIG" || echo "Subsystem sftp internal-sftp" >> "$SSHD_CONFIG"
 
 # Ajout du bloc Match User à la fin du fichier (s’il n’existe pas déjà)
-if ! grep -q "Match User $USER" "$SSHD_CONFIG"; then
+if ! grep -q "Match User $USERFRP" "$SSHD_CONFIG"; then
     cat <<EOF >> "$SSHD_CONFIG"
 
-# Configuration SFTP pour l'utilisateur $USER
-Match User $USER
+Match User $USERFTP
     ChrootDirectory $CHROOT_DIR
     ForceCommand internal-sftp
     AllowTcpForwarding no
@@ -339,7 +340,7 @@ else
     exit 1
 fi
 
-echo "Configuration SFTP pour $USER terminée avec succès."
+echo "Configuration SFTP pour $USERFTP terminée avec succès."
 
 echo ">> Sécurisation du dossier chroot et attribution des droits sur /var/www/html..."
 
@@ -362,75 +363,69 @@ ls -ld /var/www /
 # RESTAURATION DU BACKUP (site + base)
 ###########################################
 
-echo "==> Début de la restauration du backup distant..."
+# echo "==> Début de la restauration du backup distant..."
 
-# Variables de connexion
-BACKUP_USER="backupsite"
-BACKUP_HOST="87.106.123.59"
-BACKUP_DIR="/home/backupsite/backup"
-DEST_DIR="/var/www/html/perso"
-LOGFILE="/var/log/restore_presta.log"
-PASS="$1"  # mot de passe passé en paramètre
+# # Variables de connexion
+# BACKUP_USER="backupsite"
+# BACKUP_HOST="87.106.123.59"
+# BACKUP_DIR="/home/backupsite/backup"
+# DEST_DIR="/var/www/html/perso"
+# LOGFILE="/var/log/restore_presta.log"
+# PASS="$1"  # mot de passe passé en paramètre
 
-DATE=$(date '+%Y-%m-%d %H:%M:%S')
-echo "[$DATE] Début de la restauration..." >> "$LOGFILE"
+# DATE=$(date '+%Y-%m-%d %H:%M:%S')
+# echo "[$DATE] Début de la restauration..." >> "$LOGFILE"
 
-# Vérification du mot de passe
-if [ -z "$PASS" ]; then
-  echo "[$DATE] Aucun mot de passe fourni !" >> "$LOGFILE"
-  exit 1
-fi
+# # Vérification du mot de passe
+# if [ -z "$PASS" ]; then
+#   echo "[$DATE] Aucun mot de passe fourni !" >> "$LOGFILE"
+#   exit 1
+# fi
 
-# Liste des dossiers à restaurer
-FOLDERS=("themes" "config" "modules" "img" "upload" "download" "mails")
+# # Liste des dossiers à restaurer
+# FOLDERS=("themes" "config" "modules" "img" "upload" "download" "mails")
 
-for folder in "${FOLDERS[@]}"; do
-  echo "[$DATE] 🔁 Restauration du dossier $folder..." >> "$LOGFILE"
-  # Téléchargement du dossier depuis le serveur distant
-  sshpass -p "$PASS" scp -o StrictHostKeyChecking=no -r ${BACKUP_USER}@${BACKUP_HOST}:${BACKUP_DIR}/${folder}.tar.gz /tmp/ >> "$LOGFILE" 2>&1
+# for folder in "${FOLDERS[@]}"; do
+#   echo "[$DATE] Restauration du dossier $folder..." >> "$LOGFILE"
+#   # Téléchargement du dossier depuis le serveur distant
+#   sshpass -p "$PASS" scp -o StrictHostKeyChecking=no -r ${BACKUP_USER}@${BACKUP_HOST}:${BACKUP_DIR}/${folder} ${DEST_DIR} >> "$LOGFILE" 2>&1
 
-  # Suppression de l'ancien dossier local
-  rm -rf "${DEST_DIR:?}/${folder}"
+#   echo "[$DATE] Dossier $folder restauré." >> "$LOGFILE"
+# done
 
-  # Décompression du dossier téléchargé
-  tar -xzf "/tmp/${folder}.tar.gz" -C "$DEST_DIR" >> "$LOGFILE" 2>&1
+# # Restauration des fichiers simples (.htaccess et robots.txt)
+# FILES=(".htaccess" "robots.txt")
+# for file in "${FILES[@]}"; do
+#   echo "[$DATE] Restauration du fichier $file..." >> "$LOGFILE"
+#   sshpass -p "$PASS" scp -o StrictHostKeyChecking=no ${BACKUP_USER}@${BACKUP_HOST}:${BACKUP_DIR}/${file} ${DEST_DIR}/${file} >> "$LOGFILE" 2>&1
+#   echo "[$DATE] Fichier $file restauré." >> "$LOGFILE"
+# done
 
-  echo "[$DATE] Dossier $folder restauré." >> "$LOGFILE"
-done
+# if sshpass -p "$PASS" ssh -o StrictHostKeyChecking=no ${BACKUP_USER}@${BACKUP_HOST} "[ -f ${BACKUP_DIR}/SAEShop.sql ]"; then
+#   echo "[$DATE] Restauration de la base de données..." >> "$LOGFILE"
+#   sshpass -p "$PASS" scp -o StrictHostKeyChecking=no ${BACKUP_USER}@${BACKUP_HOST}:${BACKUP_DIR}/SAEShop.sql /tmp/
+#   mysql -u maxence -p"$PASS" SAEShop < /tmp/SAEShop.sql >> "$LOGFILE" 2>&1
+#   echo "[$DATE] Base de données restaurée." >> "$LOGFILE"
+# fi
 
-# Restauration des fichiers simples (.htaccess et robots.txt)
-FILES=(".htaccess" "robots.txt")
-for file in "${FILES[@]}"; do
-  echo "[$DATE] Restauration du fichier $file..." >> "$LOGFILE"
-  sshpass -p "$PASS" scp -o StrictHostKeyChecking=no ${BACKUP_USER}@${BACKUP_HOST}:${BACKUP_DIR}/${file} ${DEST_DIR}/${file} >> "$LOGFILE" 2>&1
-  echo "[$DATE] Fichier $file restauré." >> "$LOGFILE"
-done
+# echo "[$DATE] Restauration terminée avec succès !" >> "$LOGFILE"
 
-if sshpass -p "$PASS" ssh -o StrictHostKeyChecking=no ${BACKUP_USER}@${BACKUP_HOST} "[ -f ${BACKUP_DIR}/SAEShop.sql ]"; then
-  echo "[$DATE] Restauration de la base de données..." >> "$LOGFILE"
-  sshpass -p "$PASS" scp -o StrictHostKeyChecking=no ${BACKUP_USER}@${BACKUP_HOST}:${BACKUP_DIR}/SAEShop.sql /tmp/
-  mysql -u maxence -p"$PASS" SAEShop < /tmp/SAEShop.sql >> "$LOGFILE" 2>&1
-  echo "[$DATE] Base de données restaurée." >> "$LOGFILE"
-fi
+# echo "==> Installation de cron et sshpass..."
+# apt-get update
+# apt-get install -y cron sshpass
 
-echo "[$DATE] Restauration terminée avec succès !" >> "$LOGFILE"
+# # Démarrer et activer cron
+# systemctl enable cron
+# systemctl start cron
 
-echo "==> Installation de cron et sshpass..."
-apt-get update
-apt-get install -y cron sshpass
+# wget "https://raw.githubusercontent.com/maxsanch/SAE501/refs/heads/main/backup.sh"
+# chmod +x backup.sh
 
-# Démarrer et activer cron
-systemctl enable cron
-systemctl start cron
+# CRON_JOB="* * * * * /root/backup.sh 'Mj89si72jk*'"
 
-wget "https://raw.githubusercontent.com/maxsanch/SAE501/refs/heads/main/backup.sh"
-chmod +x backup.sh
+# ( crontab -l 2>/dev/null | grep -Fv "/root/backup.sh" ; echo "$CRON_JOB" ) | crontab -
 
-CRON_JOB="* * * * * /root/backup.sh 'Mj89si72jk*'"
-
-( crontab -l 2>/dev/null | grep -Fv "/root/backup.sh" ; echo "$CRON_JOB" ) | crontab -
-
-echo "cron mis en place"
+# echo "cron mis en place"
 
 echo "-- normalement, c'est bon !--"
 echo "$REP_SWAPFILE"
