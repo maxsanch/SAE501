@@ -249,7 +249,7 @@ cd /var/www/html/perso/install
 
 REP_CLI=""
 
-if php index_cli.php --domain=ip87-106-123-75.pbiass.com --db_server=127.0.0.1 --db_name=SAEShop --db_user=maxence  --db_password=$1  --prefix=myshop_ --email=maxence.sanchez05@gmail.com --password=$1; then
+if php index_cli.php --domain=ip87-106-123-61.pbiaas.com --db_server=127.0.0.1 --db_name=SAEShop --db_user=maxence  --db_password=$1  --prefix=myshop_ --email=maxence.sanchez05@gmail.com --password=$1; then
     REP_CLI="installation CLi effectuée"
 else
     REP_CLI="l'installation CLI a échouée."
