@@ -363,6 +363,9 @@ ls -ld /var/www /
 # RESTAURATION DU BACKUP (site + base)
 ###########################################
 
+apt-get update
+apt-get install -y cron sshpass
+
 echo "==> Début de la restauration du backup distant..."
 
 # Variables de connexion
@@ -421,8 +424,6 @@ sudo certbot --apache \
   --no-eff-email
 
 echo "==> Installation de cron et sshpass..."
-apt-get update
-apt-get install -y cron sshpass
 
 # Démarrer et activer cron
 systemctl enable cron
