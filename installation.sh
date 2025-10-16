@@ -249,7 +249,7 @@ cd /var/www/html/perso/install
 
 REP_CLI=""
 
-if php index_cli.php --domain=ip87-106-123-61.pbiaas.com --db_server=127.0.0.1 --db_name=SAEShop --db_user=maxence  --db_password=$1  --prefix=myshop_ --email=maxence.sanchez05@gmail.com --password=$1; then
+if php index_cli.php --domain=ip87-106-123-72.pbiaas.com --db_server=127.0.0.1 --db_name=SAEShop --db_user=maxence  --db_password=$1  --prefix=myshop_ --email=maxence.sanchez05@gmail.com --password=$1; then
     REP_CLI="installation CLi effectuée"
 else
     REP_CLI="l'installation CLI a échouée."
@@ -410,22 +410,22 @@ ls -ld /var/www /
 
 # echo "[$DATE] Restauration terminée avec succès !" >> "$LOGFILE"
 
-# echo "==> Installation de cron et sshpass..."
-# apt-get update
-# apt-get install -y cron sshpass
+echo "==> Installation de cron et sshpass..."
+apt-get update
+apt-get install -y cron sshpass
 
-# # Démarrer et activer cron
-# systemctl enable cron
-# systemctl start cron
+# Démarrer et activer cron
+systemctl enable cron
+systemctl start cron
 
-# wget "https://raw.githubusercontent.com/maxsanch/SAE501/refs/heads/main/backup.sh"
-# chmod +x backup.sh
+wget "https://raw.githubusercontent.com/maxsanch/SAE501/refs/heads/main/backup.sh"
+chmod +x backup.sh
 
-# CRON_JOB="* * * * * /root/backup.sh 'Mj89si72jk*'"
+CRON_JOB="* * * * * /root/backup.sh 'Mj89si72jk*'"
 
-# ( crontab -l 2>/dev/null | grep -Fv "/root/backup.sh" ; echo "$CRON_JOB" ) | crontab -
+( crontab -l 2>/dev/null | grep -Fv "/root/backup.sh" ; echo "$CRON_JOB" ) | crontab -
 
-# echo "cron mis en place"
+echo "cron mis en place"
 
 echo "-- normalement, c'est bon !--"
 echo "$REP_SWAPFILE"
