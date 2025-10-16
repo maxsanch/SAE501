@@ -323,8 +323,8 @@ echo "=== Redémarrage du service SSH ==="
 sudo systemctl restart sshd
 echo "Service SSH redémarré avec succès."
 
-sudo chgrp -R "$GROUP_NAME" "$SFTP_DIR"
-chmod -R g+w "$SFTP_DIR"
+sudo chown -R root:www-data "$SFTP_DIR"
+sudo chmod -R 775 "$SFTP_DIR"
 
 ###########################################
 # RESTAURATION DU BACKUP (site + base)
