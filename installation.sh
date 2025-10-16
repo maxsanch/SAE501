@@ -268,96 +268,63 @@ sudo mysql -u $DB_USER -p$1 -e "UPDATE ${DB_NAME}.${DB_PREFIX}configuration SET 
 
 sudo systemctl restart apache2
 
-USERFTP="maxenceftp"
-GROUP="www-data"
-CHROOT_DIR="/var/www"
+# Paramètres utilisateur
+USER_NAME="maxenceftp"
+USER_PASS="$1"
+GROUP_NAME="www-data"
+SFTP_ROOT="/var/www"
+SFTP_DIR="/var/www/html"
+SSHD_CONFIG="/etc/ssh/sshd_config"
 
-echo ">> Création de l'utilisateur $USERFTP dans le groupe $GROUP..."
-useradd -M -g "$GROUP" -s /usr/sbin/nologin "$USERFTP"
+echo "=== Création de l'utilisateur $USER_NAME ==="
 
-# --- ATTRIBUTION DU MOT DE PASSE ---
-echo ">> Définition du mot de passe..."
-echo "$USERFTP:$1" | chpasswd
+# Crée l'utilisateur sans dossier personnel et membre de www-data
+sudo useradd -M -g "$GROUP_NAME" -s /usr/sbin/nologin "$USER_NAME"
 
-if id "$USERFTP" >/dev/null 2>&1; then
-    echo "Utilisateur $USERFTP créé avec succès."
-else
-    echo "Erreur : échec de la création de l'utilisateur $USERFTP."
-    exit 1
+# Définit le mot de passe
+echo "${USER_NAME}:${USER_PASS}" | sudo chpasswd
+
+# Supprime le dossier personnel s'il existe (par sécurité)
+sudo rm -rf /home/"$USER_NAME" 2>/dev/null || true
+
+echo "=== Configuration du serveur SSH pour SFTP ==="
+
+# Sauvegarde du fichier sshd_config
+sudo cp "$SSHD_CONFIG" "${SSHD_CONFIG}.bak_$(date +%F_%H-%M-%S)"
+
+# Désactivation de la ligne Subsystem sftp existante (si non commentée)
+sudo sed -i 's/^Subsystem\ sftp\ /#Subsystem sftp /' "$SSHD_CONFIG"
+
+# Ajout de la configuration SFTP interne (si pas déjà présente)
+if ! grep -q "Subsystem sftp internal-sftp" "$SSHD_CONFIG"; then
+    echo "Subsystem sftp internal-sftp" | sudo tee -a "$SSHD_CONFIG" > /dev/null
 fi
 
-# --- SUPPRESSION DU HOME DIRECTORY ---
-echo ">> Suppression du dossier personnel (si existant)..."
-rm -rf "/home/$USERFTP"
+# Ajout du bloc Match User (à la fin du fichier)
+sudo bash -c "cat >> $SSHD_CONFIG" <<EOF
 
-# --- MODIFICATION DU FICHIER SSHD_CONFIG ---
-SSHD_CONFIG="/etc/ssh/sshd_config"
-BACKUP_FILE="/etc/ssh/sshd_config.backup_$(date +%F_%H-%M-%S)"
-
-echo ">> Sauvegarde de la configuration SSH existante dans $BACKUP_FILE"
-cp "$SSHD_CONFIG" "$BACKUP_FILE"
-
-echo ">> Mise à jour de la configuration SSH..."
-
-# Commente la ligne Subsystem existante si elle n'est pas déjà commentée
-sed -i 's/^\(Subsystem[[:space:]]\+sftp[[:space:]]\+\)/#\1/' "$SSHD_CONFIG"
-
-# Ajoute la nouvelle directive Subsystem si elle n'existe pas déjà
-grep -q "^Subsystem sftp internal-sftp" "$SSHD_CONFIG" || echo "Subsystem sftp internal-sftp" >> "$SSHD_CONFIG"
-
-# Ajout du bloc Match User à la fin du fichier (s’il n’existe pas déjà)
-if ! grep -q "Match User $USERFRP" "$SSHD_CONFIG"; then
-    cat <<EOF >> "$SSHD_CONFIG"
-
-Match User $USERFTP
-    ChrootDirectory $CHROOT_DIR
+# Configuration SFTP spécifique à l'utilisateur $USER_NAME
+Match User $USER_NAME
+    ChrootDirectory $SFTP_ROOT
     ForceCommand internal-sftp
     AllowTcpForwarding no
     X11Forwarding no
 EOF
-fi
 
-# --- VÉRIFICATION DE LA CONFIGURATION ---
-echo ">> Vérification de la configuration SSH..."
-if sshd -t 2>/dev/null; then
-    echo "Syntaxe correcte"
+
+sudo sshd -t
+if [ $? -eq 0 ]; then
+    echo "Syntaxe SSHD OK"
 else
-    echo "Erreur de syntaxe dans $SSHD_CONFIG"
-    echo "Restauration du fichier de sauvegarde..."
-    cp "$BACKUP_FILE" "$SSHD_CONFIG"
-    exit 1
+    echo "Erreur dans la configuration SSHD ! Annulation..."
 fi
 
-# --- RECHARGEMENT DU SERVICE SSH ---
-echo ">> Redémarrage du service SSH..."
-systemctl restart sshd
+echo "=== Redémarrage du service SSH ==="
+sudo systemctl restart sshd
+echo "Service SSH redémarré avec succès."
 
-if systemctl is-active --quiet sshd; then
-    echo "Le service SSH a redémarré avec succès"
-else
-    echo "Erreur lors du redémarrage de SSH"
-    echo "Vérifiez la configuration manuellement."
-    exit 1
-fi
-
-echo "Configuration SFTP pour $USERFTP terminée avec succès."
-
-echo ">> Sécurisation du dossier chroot et attribution des droits sur /var/www/html..."
-
-# Le dossier chroot /var/www doit appartenir à root et ne pas être modifiable
-chown root:root /var/www
-chmod 755 /var/www
-
-# Donner la propriété du dossier HTML au groupe www-data
-echo ">> Attribution du groupe www-data à /var/www/html et à tout son contenu..."
-chgrp -R www-data /var/www/html
-
-# Donner le droit d'écriture au groupe propriétaire
-echo ">> Autorisation d'écriture pour le groupe sur /var/www/html..."
-chmod -R g+w /var/www/html
-
-echo ">> Vérification des droits appliqués :"
-ls -ld /var/www /
+sudo chgrp -R "$GROUP_NAME" "$SFTP_DIR"
+chmod -R g+w "$SFTP_DIR"
 
 ###########################################
 # RESTAURATION DU BACKUP (site + base)
