@@ -268,6 +268,59 @@ sudo mysql -u $DB_USER -p$1 -e "UPDATE ${DB_NAME}.${DB_PREFIX}configuration SET 
 
 sudo systemctl restart apache2
 
+###########################################
+# RESTAURATION DU BACKUP (site + base)
+###########################################
+
+apt-get update
+apt-get install -y cron sshpass
+
+echo "==> Début de la restauration du backup distant..."
+
+# Variables de connexion
+BACKUP_USER="backupsite"
+BACKUP_HOST="87.106.123.59"
+BACKUP_DIR="/home/backupsite/backup"
+DEST_DIR="/var/www/html/perso"
+PASS="$1"  # mot de passe passé en paramètre
+
+DATE=$(date '+%Y-%m-%d %H:%M:%S')
+echo "[$DATE] Début de la restauration..."
+
+# Vérification du mot de passe
+if [ -z "$PASS" ]; then
+  echo "[$DATE] Aucun mot de passe fourni !"
+  exit 1
+fi
+
+# Liste des dossiers à restaurer
+FOLDERS=("themes" "config" "modules" "img" "upload" "download" "mails")
+
+for folder in "${FOLDERS[@]}"; do
+  echo "[$DATE] Restauration du dossier $folder..."
+  # Téléchargement du dossier depuis le serveur distant
+  sshpass -p "$PASS" scp -o StrictHostKeyChecking=no -r ${BACKUP_USER}@${BACKUP_HOST}:${BACKUP_DIR}/${folder} ${DEST_DIR}
+
+  echo "[$DATE] Dossier $folder restauré."
+done
+
+# Restauration des fichiers simples (.htaccess et robots.txt)
+FILES=(".htaccess" "robots.txt")
+for file in "${FILES[@]}"; do
+  echo "[$DATE] Restauration du fichier $file..."
+  sshpass -p "$PASS" scp -o StrictHostKeyChecking=no ${BACKUP_USER}@${BACKUP_HOST}:${BACKUP_DIR}/${file} ${DEST_DIR}/${file}
+  echo "[$DATE] Fichier $file restauré."
+done
+
+if sshpass -p "$PASS" ssh -o StrictHostKeyChecking=no ${BACKUP_USER}@${BACKUP_HOST} "[ -f ${BACKUP_DIR}/SAEShop.sql ]"; then
+  echo "[$DATE] Restauration de la base de données..."
+  sshpass -p "$PASS" scp -o StrictHostKeyChecking=no ${BACKUP_USER}@${BACKUP_HOST}:${BACKUP_DIR}/SAEShop.sql /tmp/
+  mysql -u maxence -p"$PASS" SAEShop < /tmp/SAEShop.sql
+  echo "[$DATE] Base de données restaurée."
+fi
+
+echo "[$DATE] Restauration terminée avec succès !"
+
 # Paramètres utilisateur
 USER_NAME="maxenceftp"
 USER_PASS="$1"
@@ -325,59 +378,6 @@ echo "Service SSH redémarré avec succès."
 
 sudo chown -R root:www-data "$SFTP_DIR"
 sudo chmod -R 775 "$SFTP_DIR"
-
-###########################################
-# RESTAURATION DU BACKUP (site + base)
-###########################################
-
-apt-get update
-apt-get install -y cron sshpass
-
-echo "==> Début de la restauration du backup distant..."
-
-# Variables de connexion
-BACKUP_USER="backupsite"
-BACKUP_HOST="87.106.123.59"
-BACKUP_DIR="/home/backupsite/backup"
-DEST_DIR="/var/www/html/perso"
-PASS="$1"  # mot de passe passé en paramètre
-
-DATE=$(date '+%Y-%m-%d %H:%M:%S')
-echo "[$DATE] Début de la restauration..."
-
-# Vérification du mot de passe
-if [ -z "$PASS" ]; then
-  echo "[$DATE] Aucun mot de passe fourni !"
-  exit 1
-fi
-
-# Liste des dossiers à restaurer
-FOLDERS=("themes" "config" "modules" "img" "upload" "download" "mails")
-
-for folder in "${FOLDERS[@]}"; do
-  echo "[$DATE] Restauration du dossier $folder..."
-  # Téléchargement du dossier depuis le serveur distant
-  sshpass -p "$PASS" scp -o StrictHostKeyChecking=no -r ${BACKUP_USER}@${BACKUP_HOST}:${BACKUP_DIR}/${folder} ${DEST_DIR}
-
-  echo "[$DATE] Dossier $folder restauré."
-done
-
-# Restauration des fichiers simples (.htaccess et robots.txt)
-FILES=(".htaccess" "robots.txt")
-for file in "${FILES[@]}"; do
-  echo "[$DATE] Restauration du fichier $file..."
-  sshpass -p "$PASS" scp -o StrictHostKeyChecking=no ${BACKUP_USER}@${BACKUP_HOST}:${BACKUP_DIR}/${file} ${DEST_DIR}/${file}
-  echo "[$DATE] Fichier $file restauré."
-done
-
-if sshpass -p "$PASS" ssh -o StrictHostKeyChecking=no ${BACKUP_USER}@${BACKUP_HOST} "[ -f ${BACKUP_DIR}/SAEShop.sql ]"; then
-  echo "[$DATE] Restauration de la base de données..."
-  sshpass -p "$PASS" scp -o StrictHostKeyChecking=no ${BACKUP_USER}@${BACKUP_HOST}:${BACKUP_DIR}/SAEShop.sql /tmp/
-  mysql -u maxence -p"$PASS" SAEShop < /tmp/SAEShop.sql
-  echo "[$DATE] Base de données restaurée."
-fi
-
-echo "[$DATE] Restauration terminée avec succès !"
 
 sudo apt update
 sudo apt install certbot python3-certbot-apache -y
