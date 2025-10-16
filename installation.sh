@@ -370,15 +370,14 @@ BACKUP_USER="backupsite"
 BACKUP_HOST="87.106.123.59"
 BACKUP_DIR="/home/backupsite/backup"
 DEST_DIR="/var/www/html/perso"
-LOGFILE="/var/log/restore_presta.log"
 PASS="$1"  # mot de passe passé en paramètre
 
 DATE=$(date '+%Y-%m-%d %H:%M:%S')
-echo "[$DATE] Début de la restauration..." >> "$LOGFILE"
+echo "[$DATE] Début de la restauration..."
 
 # Vérification du mot de passe
 if [ -z "$PASS" ]; then
-  echo "[$DATE] Aucun mot de passe fourni !" >> "$LOGFILE"
+  echo "[$DATE] Aucun mot de passe fourni !"
   exit 1
 fi
 
@@ -386,29 +385,29 @@ fi
 FOLDERS=("themes" "config" "modules" "img" "upload" "download" "mails")
 
 for folder in "${FOLDERS[@]}"; do
-  echo "[$DATE] Restauration du dossier $folder..." >> "$LOGFILE"
+  echo "[$DATE] Restauration du dossier $folder..."
   # Téléchargement du dossier depuis le serveur distant
-  sshpass -p "$PASS" scp -o StrictHostKeyChecking=no -r ${BACKUP_USER}@${BACKUP_HOST}:${BACKUP_DIR}/${folder} ${DEST_DIR} >> "$LOGFILE" 2>&1
+  sshpass -p "$PASS" scp -o StrictHostKeyChecking=no -r ${BACKUP_USER}@${BACKUP_HOST}:${BACKUP_DIR}/${folder} ${DEST_DIR}
 
-  echo "[$DATE] Dossier $folder restauré." >> "$LOGFILE"
+  echo "[$DATE] Dossier $folder restauré."
 done
 
 # Restauration des fichiers simples (.htaccess et robots.txt)
 FILES=(".htaccess" "robots.txt")
 for file in "${FILES[@]}"; do
-  echo "[$DATE] Restauration du fichier $file..." >> "$LOGFILE"
-  sshpass -p "$PASS" scp -o StrictHostKeyChecking=no ${BACKUP_USER}@${BACKUP_HOST}:${BACKUP_DIR}/${file} ${DEST_DIR}/${file} >> "$LOGFILE" 2>&1
-  echo "[$DATE] Fichier $file restauré." >> "$LOGFILE"
+  echo "[$DATE] Restauration du fichier $file..."
+  sshpass -p "$PASS" scp -o StrictHostKeyChecking=no ${BACKUP_USER}@${BACKUP_HOST}:${BACKUP_DIR}/${file} ${DEST_DIR}/${file}
+  echo "[$DATE] Fichier $file restauré."
 done
 
 if sshpass -p "$PASS" ssh -o StrictHostKeyChecking=no ${BACKUP_USER}@${BACKUP_HOST} "[ -f ${BACKUP_DIR}/SAEShop.sql ]"; then
-  echo "[$DATE] Restauration de la base de données..." >> "$LOGFILE"
+  echo "[$DATE] Restauration de la base de données..."
   sshpass -p "$PASS" scp -o StrictHostKeyChecking=no ${BACKUP_USER}@${BACKUP_HOST}:${BACKUP_DIR}/SAEShop.sql /tmp/
-  mysql -u maxence -p"$PASS" SAEShop < /tmp/SAEShop.sql >> "$LOGFILE" 2>&1
-  echo "[$DATE] Base de données restaurée." >> "$LOGFILE"
+  mysql -u maxence -p"$PASS" SAEShop < /tmp/SAEShop.sql
+  echo "[$DATE] Base de données restaurée."
 fi
 
-echo "[$DATE] Restauration terminée avec succès !" >> "$LOGFILE"
+echo "[$DATE] Restauration terminée avec succès !"
 
 sudo apt update
 sudo apt install certbot python3-certbot-apache -y
