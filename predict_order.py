@@ -30,8 +30,8 @@ features = {
 }
 
 # Gestion catégories et historique (one-hot)
-cat_columns = ['cat_A', 'cat_B', 'cat_C']  # exemple, adapter à tes colonnes
-hist_columns = ['hist_None', 'hist_X', 'hist_Y']  # exemple
+cat_columns = ['cat_Amour', 'cat_Apaisant', 'cat_Fantaisie', 'cat_Historique', 'cat_Horreur', 'cat_SF']  # exemple, adapter à tes colonnes
+hist_columns = ['hist_Amour','hist_Apaisant','hist_Fantaisie','hist_Historique','hist_Horreur','hist_None','hist_SF']  # exemple
 
 categorie = data.get('categorie', 'None')
 historique = data.get('historique', 'None')
