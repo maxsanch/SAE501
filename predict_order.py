@@ -49,10 +49,11 @@ for p in products:
 
     # Prédiction
     proba = model.predict_proba(final_features)[0][1]
-    
+    pred = model.predict(final_features)
     results.append({
         "id": p.get('id'),
-        "probability": float(proba)
+        "probability": float(proba),
+        "guess": int(pred)
     })
 
 # Retourner au PHP
