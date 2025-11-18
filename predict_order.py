@@ -48,7 +48,7 @@ for p in products:
     final_features = pd.DataFrame([features])
 
     # Prédiction
-    proba = model.predict_proba(final_features)[0][1]
+    proba = model.predict_proba(final_features)[0][0]
     pred = model.predict(final_features)
     results.append({
         "id": p.get('id'),
