@@ -116,6 +116,14 @@ sudo chown -R www-data:www-data /var/www/html/perso
 sudo find /var/www/html/perso -type d -exec chmod 755 {} \;
 sudo find /var/www/html/perso -type f -exec chmod 644 {} \;
 
+sudo apt update
+sudo apt install python3 python3-pip -y
+sudo apt install python3-venv python3-full -y
+
+mkdir /var/www/IA
+cd /var/www/IA
+python3 -m venv venv
+
 sudo systemctl restart apache2
 
 echo "--normalement, c'est bon !--"
