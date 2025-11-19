@@ -48,8 +48,8 @@ for p in products:
     final_features = pd.DataFrame([features])
 
     # Prédiction
-    proba = model.predict_proba(final_features)[0][0]
-    pred = model.predict(final_features)
+    proba = model.predict_proba(final_features)[0][1]
+    pred = model.predict(final_features)[0]
     results.append({
         "id": p.get('id'),
         "probability": float(proba),
