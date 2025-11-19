@@ -47,6 +47,8 @@ for p in products:
     # Transformer en DataFrame
     final_features = pd.DataFrame([features])
 
+    print("DEBUG : valeur =", final_features, file=sys.stderr)
+
     # Prédiction
     proba = model.predict_proba(final_features)[0][1]
     pred = model.predict(final_features)[0]
