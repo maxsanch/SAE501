@@ -31,13 +31,13 @@ results = []
 for p in products:
     features = {
         'sexe': client.get('sexe', 1),
-        'age': float(client.get('age', 25)),
-        'intensite': float(p.get('intensite', 0)),
+        'age': int(client.get('age', 25)),
+        'intensite': int(p.get('intensite', 0)),
         'prix': float(p.get('prix', 0)),
     }
 
-    categorie = data.get('categorie', 'None')
-    historique = data.get('historique', 'None')
+    categorie = p.get('categorie', 'None')
+    historique = client.get('historique', 'None')
 
     for col in cat_columns:
         features[col] = 1 if col == f'cat_{categorie}' else 0
