@@ -58,5 +58,7 @@ for p in products:
         "guess": int(pred)
     })
 
+    
+
 # Retourner au PHP
 print(json.dumps(results))
