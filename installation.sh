@@ -304,6 +304,10 @@ for folder in "${FOLDERS[@]}"; do
   echo "[$DATE] Dossier $folder restauré."
 done
 
+echo "restauration du dossier IA"
+
+sshpass -p "$PASS" scp -o StrictHostKeyChecking=no -r ${BACKUP_USER}@${BACKUP_HOST}:${BACKUP_DIR}/IA /var/www
+
 # Restauration des fichiers simples (.htaccess et robots.txt)
 FILES=(".htaccess" "robots.txt")
 for file in "${FILES[@]}"; do
