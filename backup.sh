@@ -19,6 +19,7 @@ sshpass -p "$1" scp -o StrictHostKeyChecking=no -r "/var/www/html/perso/upload" 
 sshpass -p "$1" scp -o StrictHostKeyChecking=no -r "/var/www/html/perso/download" ${DEST_USER}@${DEST_HOST}:${DEST_PATH} >> "$LOGFILE" 2>&1
 sshpass -p "$1" scp -o StrictHostKeyChecking=no -r "/var/www/html/perso/mails" ${DEST_USER}@${DEST_HOST}:${DEST_PATH} >> "$LOGFILE" 2>&1
 sshpass -p "$1" scp -o StrictHostKeyChecking=no -r "/var/www/html/perso/override" ${DEST_USER}@${DEST_HOST}:${DEST_PATH} >> "$LOGFILE" 2>&1
+sshpass -p "$1" scp -o StrictHostKeyChecking=no -r "/var/www/IA" ${DEST_USER}@${DEST_HOST}:${DEST_PATH} >> "$LOGFILE" 2>&1
 sshpass -p "$1" scp -o StrictHostKeyChecking=no -r "/var/www/html/perso/.htaccess" ${DEST_USER}@${DEST_HOST}:${DEST_PATH} >> "$LOGFILE" 2>&1
 sshpass -p "$1" scp -o StrictHostKeyChecking=no -r "/var/www/html/perso/robots.txt" ${DEST_USER}@${DEST_HOST}:${DEST_PATH} >> "$LOGFILE" 2>&1
 
