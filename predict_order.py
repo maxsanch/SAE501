@@ -23,7 +23,7 @@ except json.JSONDecodeError:
 client = data.get('client', {})
 products = data.get('products', [])
 # Gestion catégories et historique (one-hot)
-cat_columns = ['cat_Apaisant', 'cat_Coussins', 'cat_Fantaisie', 'cat_Historique', 'cat_Horreur', 'cat_Nostalgie', 'cat_Peluches', 'cat_SF', 'cat_Symbolique', 'cat_Voyage']  # exemple, adapter à tes colonnes
+cat_columns = ['cat_Amour', 'cat_Apaisant', 'cat_Coussins', 'cat_Fantaisie', 'cat_Historique', 'cat_Horreur', 'cat_Nostalgie', 'cat_Peluches', 'cat_SF', 'cat_Symbolique', 'cat_Voyage']  # exemple, adapter à tes colonnes
 hist_columns = ['hist_Amour', 'hist_Apaisant', 'hist_Coussins', 'hist_Fantaisie', 'hist_Historique', 'hist_Horreur', 'hist_None', 'hist_Nostalgie', 'hist_Peluches', 'hist_SF', 'hist_Symbolique', 'hist_Voyage']  # exemple
 results = []
 
