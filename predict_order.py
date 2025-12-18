@@ -34,6 +34,7 @@ for p in products:
         'age': int(client.get('age', 25)),
         'intensite': int(p.get('intensite', 0)),
         'prix': float(p.get('prix', 0)),
+        'Time': float(p.get('timespent', 0))
     }
 
     categorie = p.get('categorie', 'None')
