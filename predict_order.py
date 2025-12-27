@@ -37,7 +37,6 @@ for p in products:
         'Time': float(p.get('timespent', 0))
     }
 
-
     categorie = p.get('categorie', 'None')
     historique = client.get('historique', 'None')
 
@@ -48,8 +47,6 @@ for p in products:
 
     # Transformer en DataFrame
     final_features = pd.DataFrame([features])
-
-    print("DEBUG : valeur =", final_features, file=sys.stderr)
 
     # Prédiction
     proba = model.predict_proba(final_features)[0][1]
