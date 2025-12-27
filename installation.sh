@@ -280,7 +280,24 @@ echo "==> Début de la restauration du backup distant..."
 # Variables de connexion
 BACKUP_USER="backupsite"
 BACKUP_HOST="87.106.123.59"
-BACKUP_DIR="/home/backupsite/backup"
+
+BACKUP_BASE="/home/backupsite/backup"
+
+echo "Recherche du dernier backup disponible..."
+
+LAST_BACKUP=$(sshpass -p "$PASS" ssh -o StrictHostKeyChecking=no \
+${BACKUP_USER}@${BACKUP_HOST} \
+"ls -1 ${BACKUP_BASE} | sort | tail -n 1")
+
+if [ -z "$LAST_BACKUP" ]; then
+  echo "Aucun backup trouvé sur le serveur distant"
+  exit 1
+fi
+
+BACKUP_DIR="${BACKUP_BASE}/${LAST_BACKUP}"
+
+echo "Dernier backup détecté : ${BACKUP_DIR}"
+
 DEST_DIR="/var/www/html/perso"
 PASS="$1"  # mot de passe passé en paramètre
 
@@ -316,11 +333,19 @@ for file in "${FILES[@]}"; do
   echo "[$DATE] Fichier $file restauré."
 done
 
-if sshpass -p "$PASS" ssh -o StrictHostKeyChecking=no ${BACKUP_USER}@${BACKUP_HOST} "[ -f ${BACKUP_DIR}/SAEShop.sql ]"; then
+DB_DUMP=$(sshpass -p "$PASS" ssh -o StrictHostKeyChecking=no \
+${BACKUP_USER}@${BACKUP_HOST} \
+"ls ${BACKUP_DIR}/SAEShop_*.sql 2>/dev/null | tail -n 1")
+
+if [ -n "$DB_DUMP" ]; then
   echo "[$DATE] Restauration de la base de données..."
-  sshpass -p "$PASS" scp -o StrictHostKeyChecking=no ${BACKUP_USER}@${BACKUP_HOST}:${BACKUP_DIR}/SAEShop.sql /tmp/
+  sshpass -p "$PASS" scp -o StrictHostKeyChecking=no \
+  ${BACKUP_USER}@${BACKUP_HOST}:${DB_DUMP} /tmp/SAEShop.sql
+
   mysql -u maxence -p"$PASS" SAEShop < /tmp/SAEShop.sql
   echo "[$DATE] Base de données restaurée."
+else
+  echo "Aucun dump SQL trouvé"
 fi
 
 echo "[$DATE] Restauration terminée avec succès !"
