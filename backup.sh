@@ -14,7 +14,7 @@ sshpass -p "$1" ssh -o StrictHostKeyChecking=no \
 ${DEST_USER}@${DEST_HOST} "mkdir -p ${DEST_PATH}"
 
 # Exécution
-echo "[$DATE] Début du transfert..." >> "$LOGFILE"
+echo "[$DATE] Début du transfert..."
 sshpass -p "$1" scp -o StrictHostKeyChecking=no -r "/var/www/html/perso/themes" ${DEST_USER}@${DEST_HOST}:${DEST_PATH} >> "$LOGFILE" 2>&1
 sshpass -p "$1" scp -o StrictHostKeyChecking=no -r "/var/www/html/perso/config" ${DEST_USER}@${DEST_HOST}:${DEST_PATH} >> "$LOGFILE" 2>&1
 sshpass -p "$1" scp -o StrictHostKeyChecking=no -r "/var/www/html/perso/modules" ${DEST_USER}@${DEST_HOST}:${DEST_PATH} >> "$LOGFILE" 2>&1
@@ -32,10 +32,12 @@ sshpass -p "$1" scp -o StrictHostKeyChecking=no -r "/root/SAEShop_${BACKUP_DATE}
 
 sshpass -p "$1" ssh -o StrictHostKeyChecking=no \
 ${DEST_USER}@${DEST_HOST} \
-"find /home/backupsite/backup -mindepth 1 -maxdepth 1 -type d -mtime +7 -exec rm -rf {} \;"
+"find /home/backupsite/backup -mindepth 1 -maxdepth 1 -type d -mtime +3 -exec rm -rf {} \;"
+
+rm -f /root/SAEShop_${BACKUP_DATE}.sql
 
 if [ $? -eq 0 ]; then
-  echo "[$DATE] Sauvegarde réussie" >> "$LOGFILE"
+  echo "[$DATE] Sauvegarde réussie"
 else
-  echo "[$DATE] Erreur lors du transfert" >> "$LOGFILE"
+  echo "[$DATE] Erreur lors du transfert"
 fi
