@@ -15,6 +15,11 @@ ${DEST_USER}@${DEST_HOST} "mkdir -p ${DEST_PATH}"
 
 # Exécution
 echo "[$DATE] Début du transfert..."
+
+sshpass -p "$1" ssh -o StrictHostKeyChecking=no \
+${DEST_USER}@${DEST_HOST} \
+"find /home/backupsite/backup -mindepth 1 -maxdepth 1 -type d -mtime +2 -exec rm -rf {} \;"
+
 sshpass -p "$1" scp -o StrictHostKeyChecking=no -r "/var/www/html/perso/themes" ${DEST_USER}@${DEST_HOST}:${DEST_PATH} >> "$LOGFILE" 2>&1
 sshpass -p "$1" scp -o StrictHostKeyChecking=no -r "/var/www/html/perso/config" ${DEST_USER}@${DEST_HOST}:${DEST_PATH} >> "$LOGFILE" 2>&1
 sshpass -p "$1" scp -o StrictHostKeyChecking=no -r "/var/www/html/perso/modules" ${DEST_USER}@${DEST_HOST}:${DEST_PATH} >> "$LOGFILE" 2>&1
@@ -29,10 +34,6 @@ sshpass -p "$1" scp -o StrictHostKeyChecking=no "/var/www/html/perso/robots.txt"
 
 mysqldump -u maxence -p'Mj89si72jk*' SAEShop > /root/SAEShop_${BACKUP_DATE}.sql
 sshpass -p "$1" scp -o StrictHostKeyChecking=no -r "/root/SAEShop_${BACKUP_DATE}.sql" ${DEST_USER}@${DEST_HOST}:${DEST_PATH} >> "$LOGFILE" 2>&1
-
-sshpass -p "$1" ssh -o StrictHostKeyChecking=no \
-${DEST_USER}@${DEST_HOST} \
-"find /home/backupsite/backup -mindepth 1 -maxdepth 1 -type d -mtime +3 -exec rm -rf {} \;"
 
 rm -f /root/SAEShop_${BACKUP_DATE}.sql
 
