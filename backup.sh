@@ -18,7 +18,7 @@ echo "[$DATE] Début du transfert..."
 
 sshpass -p "$1" ssh -o StrictHostKeyChecking=no \
 ${DEST_USER}@${DEST_HOST} \
-"find /home/backupsite/backup -mindepth 1 -maxdepth 1 -type d -mtime +2 -exec rm -rf {} \;"
+"find /home/backupsite/backup -mindepth 1 -maxdepth 1 -type d -mtime +1 -exec rm -rf {} \;"
 
 sshpass -p "$1" scp -o StrictHostKeyChecking=no -r "/var/www/html/perso/themes" ${DEST_USER}@${DEST_HOST}:${DEST_PATH} >> "$LOGFILE" 2>&1
 sshpass -p "$1" scp -o StrictHostKeyChecking=no -r "/var/www/html/perso/config" ${DEST_USER}@${DEST_HOST}:${DEST_PATH} >> "$LOGFILE" 2>&1
