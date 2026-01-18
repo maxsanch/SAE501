@@ -2,6 +2,11 @@
 
 # verifier si le server accepte la restor avant, verifier si les inforamtions de la BDD ont changer et transferer le dossier perso
 
+if [ -z "$1" ]; then
+  echo "Mot de passe manquant"
+  exit 1
+fi
+
 echo "modification de la memoire..."
 
 dd if=/dev/zero of=/swapfile1 bs=1024 count=1048576
@@ -272,14 +277,15 @@ sudo systemctl restart apache2
 # RESTAURATION DU BACKUP (site + base)
 ###########################################
 
-apt-get update
-apt-get install -y cron sshpass
+sudo apt update
+sudo apt install -y cron sshpass
 
 echo "==> Début de la restauration du backup distant..."
 
 # Variables de connexion
 BACKUP_USER="backupsite"
 BACKUP_HOST="87.106.123.59"
+PASS="$1"  # mot de passe passé en paramètre
 
 BACKUP_BASE="/home/backupsite/backup"
 
@@ -299,7 +305,6 @@ BACKUP_DIR="${BACKUP_BASE}/${LAST_BACKUP}"
 echo "Dernier backup détecté : ${BACKUP_DIR}"
 
 DEST_DIR="/var/www/html/perso"
-PASS="$1"  # mot de passe passé en paramètre
 
 DATE=$(date '+%Y-%m-%d %H:%M:%S')
 echo "[$DATE] Début de la restauration..."
@@ -347,6 +352,9 @@ if [ -n "$DB_DUMP" ]; then
 else
   echo "Aucun dump SQL trouvé"
 fi
+
+chown -R www-data:www-data /var/www/html/perso
+chmod -R 755 /var/www/html/perso
 
 echo "[$DATE] Restauration terminée avec succès !"
 
