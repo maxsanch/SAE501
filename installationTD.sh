@@ -158,185 +158,15 @@ fi
 echo "redemarage de apache..."
 sudo systemctl reload apache2
 
-cd /var/www/html/perso
-
-echo "recuperation du fichier prestashop..."
-
-REP_GETPRESTA=""
-
-if wget https://assets.prestashop3.com/dst/edition/corporate/9.0.0-1.0/prestashop_edition_classic_version_9.0.0-1.0.zip?source=docker; then
-    REP_GETPRESTA="prestashop recupéré"
-else
-    REP_GETPRESTA="La récupération du prestashop a échouée"
-fi
-
-echo "$REP_GETPRESTA"
-
-REP_MOVE=""
-
-if mv 'prestashop_edition_classic_version_9.0.0-1.0.zip?source=docker' prestashop.zip; then
-    REP_MOVE="le déplacement du fichier a été effectué"
-else
-    REP_MOVE="le déplacement du fichier a échoué"
-fi
-
-echo "$REP_MOVE"
-
 sudo apt update
 
-REP_UNZIP=""
-
-if sudo apt install unzip; then
-    REP_UNZIP="installation de UNZIP effectuée"
-else
-    REP_UNZIP="m'installation de UNZIP a échouée"
-fi
-
-echo "$REP_UNZIP"
-
-REP_UNZIPDONE=""
-
-if unzip -o prestashop.zip; then
-    REP_UNZIPDONE="dézippage de prestashop effectué"
-else
-    REP_UNZIPDONE="le dezippage de prestashop a echoué"
-fi
-
-echo "$REP_UNZIPDONE"
-
-chown www-data *
-chown www-data .
-
-echo "dezippage du projet..."
-
-REP_UNZIPDONETWO=""
-
-if unzip -o prestashop.zip; then
-    REP_UNZIPDONETWO="le second dezippage a été effectué"
-else
-    REP_UNZIPDONETWO="le second dezippage a échoué"
-fi
-
-echo "$REP_UNZIPDONETWO"
-
-sudo apt update
-sudo apt install -y unzip php-intl
-
-mysql -u maxence -p$1 -e "CREATE DATABASE SAEShop;"
+mysql -u maxence -p$1 -e "CREATE DATABASE tokensJWT;"
 
 sudo chown -R www-data:www-data /var/www/html/perso
 sudo find /var/www/html/perso -type d -exec chmod 755 {} \;
 sudo find /var/www/html/perso -type f -exec chmod 644 {} \;
 
-echo "recherche index cli..."
-
-cd /var/www/html/perso/install
-
-REP_CLI=""
-
-if php index_cli.php --domain=ip87-106-123-72.pbiaas.com --db_server=127.0.0.1 --db_name=SAEShop --db_user=maxence  --db_password=$1  --prefix=myshop_ --email=maxence.sanchez05@gmail.com --password=$1; then
-    REP_CLI="installation CLi effectuée"
-else
-    REP_CLI="l'installation CLI a échouée."
-fi
-
-cd /var/www/html/perso
-
-sudo rm -r install
-
-echo "Activation du HTTPS dans PrestaShop..."
-DB_NAME="SAEShop"
-DB_PREFIX="myshop_"
-
-sudo mysql -u $DB_USER -p$1 -e "UPDATE ${DB_NAME}.${DB_PREFIX}configuration SET value='1' WHERE name='PS_SSL_ENABLED';"
-sudo mysql -u $DB_USER -p$1 -e "UPDATE ${DB_NAME}.${DB_PREFIX}configuration SET value='1' WHERE name='PS_SSL_ENABLED_EVERYWHERE';"
-
 sudo systemctl restart apache2
-
-###########################################
-# RESTAURATION DU BACKUP (site + base)
-###########################################
-
-sudo apt update
-sudo apt install -y cron sshpass
-
-echo "==> Début de la restauration du backup distant..."
-
-# Variables de connexion
-BACKUP_USER="backupsite"
-BACKUP_HOST="87.106.123.59"
-PASS="$1"  # mot de passe passé en paramètre
-
-BACKUP_BASE="/home/backupsite/backup"
-
-echo "Recherche du dernier backup disponible..."
-
-LAST_BACKUP=$(sshpass -p "$PASS" ssh -o StrictHostKeyChecking=no \
-${BACKUP_USER}@${BACKUP_HOST} \
-"ls -1 ${BACKUP_BASE} | sort | tail -n 1")
-
-if [ -z "$LAST_BACKUP" ]; then
-  echo "Aucun backup trouvé sur le serveur distant"
-  exit 1
-fi
-
-BACKUP_DIR="${BACKUP_BASE}/${LAST_BACKUP}"
-
-echo "Dernier backup détecté : ${BACKUP_DIR}"
-
-DEST_DIR="/var/www/html/perso"
-
-DATE=$(date '+%Y-%m-%d %H:%M:%S')
-echo "[$DATE] Début de la restauration..."
-
-# Vérification du mot de passe
-if [ -z "$PASS" ]; then
-  echo "[$DATE] Aucun mot de passe fourni !"
-  exit 1
-fi
-
-# Liste des dossiers à restaurer
-FOLDERS=("themes" "config" "modules" "img" "upload" "download" "mails")
-
-for folder in "${FOLDERS[@]}"; do
-  echo "[$DATE] Restauration du dossier $folder..."
-  # Téléchargement du dossier depuis le serveur distant
-  sshpass -p "$PASS" scp -o StrictHostKeyChecking=no -r ${BACKUP_USER}@${BACKUP_HOST}:${BACKUP_DIR}/${folder} ${DEST_DIR}
-
-  echo "[$DATE] Dossier $folder restauré."
-done
-
-echo "restauration du dossier IA"
-
-sshpass -p "$PASS" scp -o StrictHostKeyChecking=no -r ${BACKUP_USER}@${BACKUP_HOST}:${BACKUP_DIR}/IA /var/www
-
-# Restauration des fichiers simples (.htaccess et robots.txt)
-FILES=(".htaccess" "robots.txt")
-for file in "${FILES[@]}"; do
-  echo "[$DATE] Restauration du fichier $file..."
-  sshpass -p "$PASS" scp -o StrictHostKeyChecking=no ${BACKUP_USER}@${BACKUP_HOST}:${BACKUP_DIR}/${file} ${DEST_DIR}/${file}
-  echo "[$DATE] Fichier $file restauré."
-done
-
-DB_DUMP=$(sshpass -p "$PASS" ssh -o StrictHostKeyChecking=no \
-${BACKUP_USER}@${BACKUP_HOST} \
-"ls ${BACKUP_DIR}/SAEShop_*.sql 2>/dev/null | tail -n 1")
-
-if [ -n "$DB_DUMP" ]; then
-  echo "[$DATE] Restauration de la base de données..."
-  sshpass -p "$PASS" scp -o StrictHostKeyChecking=no \
-  ${BACKUP_USER}@${BACKUP_HOST}:${DB_DUMP} /tmp/SAEShop.sql
-
-  mysql -u maxence -p"$PASS" SAEShop < /tmp/SAEShop.sql
-  echo "[$DATE] Base de données restaurée."
-else
-  echo "Aucun dump SQL trouvé"
-fi
-
-chown -R www-data:www-data /var/www/html/perso
-chmod -R 755 /var/www/html/perso
-
-echo "[$DATE] Restauration terminée avec succès !"
 
 # Paramètres utilisateur
 USER_NAME="maxenceftp"
@@ -397,33 +227,9 @@ sudo chown -R root:www-data "$SFTP_DIR"
 sudo chmod -R 775 "$SFTP_DIR"
 
 sudo apt update
-sudo apt install certbot python3-certbot-apache -y
 
-sudo certbot --apache \
-  -d ip87-106-123-72.pbiaas.com \
-  --non-interactive \
-  --agree-tos \
-  --email maxence.sanchez05@gmail.com \
-  --redirect \
-  --no-eff-email
-
-echo "==> Installation de cron et sshpass..."
-
-# Démarrer et activer cron
-systemctl enable cron
-systemctl start cron
-
-wget "https://raw.githubusercontent.com/maxsanch/SAE501/refs/heads/main/backup.sh"
-chmod +x backup.sh
-
-CRON_JOB="0 3 * * * /root/backup.sh '$1'"
-
-( crontab -l 2>/dev/null | grep -Fv "/root/backup.sh" ; echo "$CRON_JOB" ) | crontab -
-
-echo "cron mis en place"
 
 echo "-- normalement, c'est bon !--"
-echo "$REP_SWAPFILE"
 echo "$REP_USER"
 echo "$REP_APACHE"
 echo "$REP_PHP"
@@ -433,9 +239,3 @@ echo "$REP_PHPMYADMIN"
 echo "$REP_SITE"
 echo "$REP_SSL"
 echo "$REP_SITESSL"
-echo "$REP_GETPRESTA"
-echo "$REP_MOVE"
-echo "$REP_UNZIP"
-echo "$REP_UNZIPDONE"
-echo "$REP_UNZIPDONETWO"
-echo "$REP_CLI"
